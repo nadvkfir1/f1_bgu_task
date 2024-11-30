@@ -3,10 +3,6 @@ Author: Nadav Kfir
 Description: ...
 """
 
-from PIL import Image
-
-IMAGE_PATH = r"C:\Users\nadav\OneDrive\תמונות\צילומי מסך\WhatsApp Image 2024-10-30 at 13.34.48.jpeg"
-
 from ultralytics import YOLO
 import cv2
 
@@ -14,8 +10,8 @@ import cv2
 model = YOLO("runs/detect/traffic_cone_model/weights/best.pt")  # Path to your trained weights
 
 # Load the video
-video_path = "path/to/input_video.mp4"  # Path to the input video
-output_path = "path/to/output_video.mp4"  # Path to save the output video
+video_path = "fsd1.mp4"  # Path to the input video
+output_path = "iut.mp4"  # Path to save the output video
 
 def main():
     cap = cv2.VideoCapture(video_path)
@@ -38,8 +34,27 @@ def main():
         # Convert the frame to RGB for detection
         results = model.predict(source=frame, conf=0.5, show=False, verbose=False)  # Run detection
 
-        # Annotate the frame with detection results
-        annotated_frame = results[0].plot()
+        annotated_frame = frame.copy()
+        for idx, result in enumerate(results[0].boxes):  # Iterate through detected boxes
+            box = result.xyxy[0]  # Bounding box coordinates (xmin, ymin, xmax, ymax)
+            confidence = result.conf[0]  # Confidence score
+            class_id = int(result.cls[0])  # Class ID
+            label = results[0].names[class_id]  # Class label
+            x,y = ((box[0] + box[2]) // 2, (box[1] *6 + box[3]) // 7)
+            x = int(x)
+            y = int(y)
+            a, b, c = tuple(annotated_frame[y][x])
+
+            # Add a counter to the text
+            label_text = f"{idx + 1}: {label} ({confidence:.2f})"  # Add counter to text
+
+            # Draw the bounding box in red
+            color = int(a), int(b), int(c)  # Red color in BGR
+            cv2.rectangle(annotated_frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 2)
+
+            # Add the label and counter above the bounding box
+            cv2.putText(annotated_frame, label_text, (int(box[0]), int(box[1]) - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
         # Write the annotated frame to the output video
         out.write(annotated_frame)
