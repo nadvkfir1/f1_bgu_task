@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['cone_barrel']
+
+roboflow:
+  workspace: data-converter
+  project: barrel-ctlrd
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/data-converter/barrel-ctlrd/dataset/1
