@@ -5,9 +5,10 @@ Description: ...
 
 from ultralytics import YOLO
 import cv2
+from pathlib import Path
 
-# Load the trained YOLOv8 model
-model = YOLO("runs/detect/traffic_cone_model/weights/best.pt")  # Path to your trained weights
+# Load the model of the AI
+model = YOLO(Path(__file__).parent.absolute()/"runs/detect/traffic_cone_model/weights/best.pt")  
 
 # Load the video
 video_path = "fsd1.mp4"  # Path to the input video
@@ -23,8 +24,8 @@ def main():
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # Define the codec and create a VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 files
+    # runs the video
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
     # Process each frame in the video
@@ -33,25 +34,32 @@ def main():
         if not ret:
             break
 
-        # Convert the frame to RGB for detection
-        results = model.predict(source=frame, conf=0.5, show=False, verbose=False)  # Run detection
+        # Convert the frame to BRG 
+        results = model.predict(source=frame, verbose=False)  # Run detection
 
         annotated_frame = frame.copy()
         for idx, result in enumerate(results[0].boxes):  # Iterate through detected boxes
             box = result.xyxy[0]  # Bounding box coordinates (xmin, ymin, xmax, ymax)
             confidence = result.conf[0]  # Confidence score
-            class_id = int(result.cls[0])  # Class ID
-            label = results[0].names[class_id]  # Class label
-            x,y = ((box[0] + box[2]) // 2, (box[1] *6 + box[3]) // 7)
-            x = int(x)
-            y = int(y)
-            a, b, c = tuple(annotated_frame[y][x])
+            label = "cone"
+            blue = green = red = 0
+            for x in range(int(box[0]), int(box[2])):
+                for y in range((int(box[1])+int(box[3]))//2, int(box[3])): # Collect only bottom half for precision
+                    x = int(x)
+                    y = int(y)
+                    blue += int(annotated_frame[y][x][0])
+                    green += int(annotated_frame[y][x][1])
+                    red += int(annotated_frame[y][x][2])
+            number_of_pixels = (int(box[2])-int(box[0]))*(int(box[3])-((int(box[1])+int(box[3]))//2)) # Counting the pixels in the frame and dividing for each color to get the average color
+            blue = blue//number_of_pixels
+            green = green//number_of_pixels
+            red = red//number_of_pixels 
 
-            # Add a counter to the text
-            label_text = f"{idx + 1}: {label} ({confidence:.2f})"  # Add counter to text
+            # Add a counter to the cone in the frame
+            label_text = f"{idx + 1}: {label} ({confidence:.2f})"  
 
-            # Draw the bounding box in red
-            color = int(a), int(b), int(c)  # Red color in BGR
+            # Draw the bounding box in color of the cone
+            color = int(blue), int(green), int(red)  
             cv2.rectangle(annotated_frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 2)
 
             # Add the label and counter above the bounding box
