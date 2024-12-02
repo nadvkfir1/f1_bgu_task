@@ -13,6 +13,8 @@ model = YOLO("runs/detect/traffic_cone_model/weights/best.pt")  # Path to your t
 video_path = "fsd1.mp4"  # Path to the input video
 output_path = "iut.mp4"  # Path to save the output video
 
+show = True
+
 def main():
     cap = cv2.VideoCapture(video_path)
 
@@ -60,7 +62,8 @@ def main():
         out.write(annotated_frame)
 
         # Optional: Show the frame in real-time
-        cv2.imshow("Traffic Cone Detection", annotated_frame)
+        if show:
+            cv2.imshow("Traffic Cone Detection", annotated_frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
